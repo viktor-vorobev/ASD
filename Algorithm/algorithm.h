@@ -26,8 +26,6 @@ void checkMultipleSequencesDetailed(const std::vector<std::string>& sequences);
 int getMaxBracketDepth(const std::string& sequence);
 bool checkParenthesesOnly(const std::string& sequence);
 std::vector<size_t> findUnclosedBrackets(const std::string& sequence);
-std::vector<std::string> generateTestSequences();
-CheckResult checkBracketSequenceWithDetails(const std::string& sequence);
 
 // Вспомогательные функции (могут быть полезны для внешнего использования)
 bool isOpeningBracket(char c);

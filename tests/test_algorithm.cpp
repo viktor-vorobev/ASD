@@ -103,35 +103,6 @@ TEST(BracketCheckerTest, CheckSequencesWithOtherCharacters) {
     EXPECT_FALSE(checkBracketSequence("<html><body></html></body>"));
 }
 
-// Тесты для функции с детальной информацией
-TEST(BracketCheckerTest, CheckSequenceWithDetails) {
-    CheckResult result;
-
-    // Valid cases
-    result = checkBracketSequenceWithDetails("()");
-    EXPECT_TRUE(result.isValid);
-    EXPECT_EQ(result.message, "All brackets are properly balanced");
-
-    result = checkBracketSequenceWithDetails("({[]})");
-    EXPECT_TRUE(result.isValid);
-
-    // Invalid cases
-    result = checkBracketSequenceWithDetails("(");
-    EXPECT_FALSE(result.isValid);
-    EXPECT_EQ(result.message, "Unclosed opening bracket");
-
-    result = checkBracketSequenceWithDetails(")");
-    EXPECT_FALSE(result.isValid);
-    EXPECT_EQ(result.message, "Unmatched closing bracket");
-    EXPECT_EQ(result.foundChar, ')');
-
-    result = checkBracketSequenceWithDetails("(]");
-    EXPECT_FALSE(result.isValid);
-    EXPECT_EQ(result.message, "Mismatched brackets");
-    EXPECT_EQ(result.expectedChar, ')');
-    EXPECT_EQ(result.foundChar, ']');
-}
-
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
