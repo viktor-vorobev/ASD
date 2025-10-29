@@ -178,7 +178,7 @@ TEST(ListTest, Find) {
 }
 
 // Тесты для итераторов
-TEST(ListTest, Iterator) {
+TEST(IteratorTest, Iterator) {
     List<int> list;
     list.push_back(1);
     list.push_back(2);
@@ -192,8 +192,32 @@ TEST(ListTest, Iterator) {
     EXPECT_EQ(sum, 6);
 }
 
+TEST(IteratorTest, ModifyInLoop) {
+    List<int> list;
+    for (int i = 1; i <= 5; i++) {
+        list.push_back(i);
+    }
+
+    // Удвоение всех элементов в цикле
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        *it = *it * 2;
+    }
+
+    // Проверка результатов
+    auto it = list.begin();
+    EXPECT_EQ(*it, 2);
+    ++it;
+    EXPECT_EQ(*it, 4);
+    ++it;
+    EXPECT_EQ(*it, 6);
+    ++it;
+    EXPECT_EQ(*it, 8);
+    ++it;
+    EXPECT_EQ(*it, 10);
+}
+
 // итератор для пустого списка
-TEST(IteratorEmptyListTest, BeginEndEqualityForEmptyList) {
+TEST(IteratorTest, BeginEndEqualityForEmptyList) {
     List<int> empty_list;
 
     // begin() и end() должны быть равны для пустого списка
@@ -204,7 +228,7 @@ TEST(IteratorEmptyListTest, BeginEndEqualityForEmptyList) {
     SUCCEED(); // Если дошли сюда - нет падения
 }
 
-TEST(IteratorEmptyListTest, IncrementBeginIteratorOfEmptyList) {
+TEST(IteratorTest, IncrementBeginIteratorOfEmptyList) {
     List<int> empty_list;
 
     auto it = empty_list.begin();
@@ -224,7 +248,7 @@ TEST(IteratorEmptyListTest, IncrementBeginIteratorOfEmptyList) {
     EXPECT_TRUE(it == empty_list.end());
 }
 
-TEST(IteratorEmptyListTest, PostIncrementBeginIteratorOfEmptyList) {
+TEST(IteratorTest, PostIncrementBeginIteratorOfEmptyList) {
     List<int> empty_list;
 
     auto it = empty_list.begin();
@@ -240,7 +264,7 @@ TEST(IteratorEmptyListTest, PostIncrementBeginIteratorOfEmptyList) {
     EXPECT_TRUE(it == empty_list.end());
 }
 
-TEST(ListTest, RangeBasedFor) {
+TEST(IteratorTest, RangeBasedFor) {
     List<int> list;
     list.push_back(1);
     list.push_back(2);
