@@ -192,6 +192,54 @@ TEST(ListTest, Iterator) {
     EXPECT_EQ(sum, 6);
 }
 
+// итератор дл€ пустого списка
+TEST(IteratorEmptyListTest, BeginEndEqualityForEmptyList) {
+    List<int> empty_list;
+
+    // begin() и end() должны быть равны дл€ пустого списка
+    EXPECT_TRUE(empty_list.begin() == empty_list.end());
+    EXPECT_FALSE(empty_list.begin() != empty_list.end());
+
+    // Ќе должно быть падени€ или неопределенного поведени€
+    SUCCEED(); // ≈сли дошли сюда - нет падени€
+}
+
+TEST(IteratorEmptyListTest, IncrementBeginIteratorOfEmptyList) {
+    List<int> empty_list;
+
+    auto it = empty_list.begin();
+
+    // ѕре-инкремент не должен падать
+    ++it;
+    EXPECT_TRUE(it == empty_list.end());
+
+    // ѕовторный инкремент не должен падать
+    ++it;
+    EXPECT_TRUE(it == empty_list.end());
+
+    // ћногократный инкремент не должен падать
+    for (int i = 0; i < 10; ++i) {
+        ++it;
+    }
+    EXPECT_TRUE(it == empty_list.end());
+}
+
+TEST(IteratorEmptyListTest, PostIncrementBeginIteratorOfEmptyList) {
+    List<int> empty_list;
+
+    auto it = empty_list.begin();
+
+    // ѕост-инкремент не должен падать
+    auto old_it = it++;
+    EXPECT_TRUE(old_it == empty_list.begin());
+    EXPECT_TRUE(it == empty_list.end());
+
+    // ѕовторный пост-инкремент не должен падать
+    old_it = it++;
+    EXPECT_TRUE(old_it == empty_list.end());
+    EXPECT_TRUE(it == empty_list.end());
+}
+
 TEST(ListTest, RangeBasedFor) {
     List<int> list;
     list.push_back(1);
