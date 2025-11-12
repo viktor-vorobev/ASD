@@ -13,22 +13,42 @@ private:
         Node* prev;
 
         Node(const T& value) : data(value), next(nullptr), prev(nullptr) {}
+
+        // Явно запрещаем копирование и присваивание узлов
+        Node(const Node&) = delete;
+        Node& operator=(const Node&) = delete;
     };
 
     Node* head;
     Node* tail;
     size_t list_size;
 
-public:
-    // Конструкторы и деструктор
-    List() : head(nullptr), tail(nullptr), list_size(0) {}
-
-    List(const List& other) : head(nullptr), tail(nullptr), list_size(0) {
+    // Вспомогательная функция для копирования списка
+    void copyFrom(const List& other) {
         Node* current = other.head;
         while (current != nullptr) {
             push_back(current->data);
             current = current->next;
         }
+    }
+
+    // Вспомогательная функция для очистки списка
+    void clearList() {
+        while (head != nullptr) {
+            Node* temp = head;
+            head = head->next;
+            delete temp;
+        }
+        tail = nullptr;
+        list_size = 0;
+    }
+
+public:
+    // Конструкторы и деструктор
+    List() : head(nullptr), tail(nullptr), list_size(0) {}
+
+    List(const List& other) : head(nullptr), tail(nullptr), list_size(0) {
+        copyFrom(other);
     }
 
     List(List&& other) noexcept
@@ -39,25 +59,21 @@ public:
     }
 
     ~List() {
-        clear();
+        clearList();
     }
 
     // Операторы присваивания
     List& operator=(const List& other) {
         if (this != &other) {
-            clear();
-            Node* current = other.head;
-            while (current != nullptr) {
-                push_back(current->data);
-                current = current->next;
-            }
+            clearList();
+            copyFrom(other);
         }
         return *this;
     }
 
     List& operator=(List&& other) noexcept {
         if (this != &other) {
-            clear();
+            clearList();
             head = other.head;
             tail = other.tail;
             list_size = other.list_size;
@@ -106,18 +122,33 @@ public:
     public:
         Iterator(Node* node) : current(node) {}
 
-        T& operator*() { return current->data; }
+        T& operator*() {
+            if (current == nullptr) {
+                throw std::runtime_error("Dereferencing null iterator");
+            }
+            return current->data;
+        }
+
         Iterator& operator++() {
-            if (current) current = current->next;
+            if (current) {
+                current = current->next;
+            }
             return *this;
         }
+
         Iterator operator++(int) {
             Iterator temp = *this;
             ++(*this);
             return temp;
         }
-        bool operator==(const Iterator& other) const { return current == other.current; }
-        bool operator!=(const Iterator& other) const { return current != other.current; }
+
+        bool operator==(const Iterator& other) const {
+            return current == other.current;
+        }
+
+        bool operator!=(const Iterator& other) const {
+            return current != other.current;
+        }
     };
 
     Iterator begin() { return Iterator(head); }
@@ -145,8 +176,8 @@ public:
             head = tail = new_node;
         }
         else {
-            tail->next = new_node;
             new_node->prev = tail;
+            tail->next = new_node;
             tail = new_node;
         }
         list_size++;
@@ -159,25 +190,29 @@ public:
 
         if (position == 0) {
             push_front(value);
+            return;
         }
-        else if (position == list_size) {
+
+        if (position == list_size) {
             push_back(value);
+            return;
         }
-        else {
-            Node* new_node = new Node(value);
-            Node* current = head;
 
-            for (size_t i = 0; i < position; i++) {
-                current = current->next;
-            }
+        Node* new_node = new Node(value);
+        Node* current = head;
 
-            new_node->next = current;
-            new_node->prev = current->prev;
-            current->prev->next = new_node;
-            current->prev = new_node;
-
-            list_size++;
+        // Находим узел на нужной позиции
+        for (size_t i = 0; i < position; i++) {
+            current = current->next;
         }
+
+        // Вставляем перед current
+        new_node->prev = current->prev;
+        new_node->next = current;
+        current->prev->next = new_node;
+        current->prev = new_node;
+
+        list_size++;
     }
 
     // Удаление элементов
@@ -187,13 +222,13 @@ public:
         }
 
         Node* temp = head;
-        head = head->next;
 
-        if (head != nullptr) {
-            head->prev = nullptr;
+        if (head == tail) { // только один элемент
+            head = tail = nullptr;
         }
         else {
-            tail = nullptr;
+            head = head->next;
+            head->prev = nullptr;
         }
 
         delete temp;
@@ -206,13 +241,13 @@ public:
         }
 
         Node* temp = tail;
-        tail = tail->prev;
 
-        if (tail != nullptr) {
-            tail->next = nullptr;
+        if (head == tail) { // только один элемент
+            head = tail = nullptr;
         }
         else {
-            head = nullptr;
+            tail = tail->prev;
+            tail->next = nullptr;
         }
 
         delete temp;
@@ -226,28 +261,29 @@ public:
 
         if (position == 0) {
             pop_front();
+            return;
         }
-        else if (position == list_size - 1) {
+
+        if (position == list_size - 1) {
             pop_back();
+            return;
         }
-        else {
-            Node* current = head;
-            for (size_t i = 0; i < position; i++) {
-                current = current->next;
-            }
 
-            current->prev->next = current->next;
-            current->next->prev = current->prev;
-
-            delete current;
-            list_size--;
+        Node* current = head;
+        for (size_t i = 0; i < position; i++) {
+            current = current->next;
         }
+
+        // Удаляем current из середины списка
+        current->prev->next = current->next;
+        current->next->prev = current->prev;
+
+        delete current;
+        list_size--;
     }
 
     void clear() {
-        while (!empty()) {
-            pop_front();
-        }
+        clearList();
     }
 
     // Информация о списке

@@ -26,8 +26,13 @@ TEST_F(QueueTest, EnqueueAndFront) {
 
 TEST_F(QueueTest, Dequeue) {
     EXPECT_EQ(queue.dequeue(), 1);
+    EXPECT_EQ(queue.front(), 2); // После удаления первого, front должен быть 2
+
     EXPECT_EQ(queue.dequeue(), 2);
+    EXPECT_EQ(queue.front(), 3);
+
     EXPECT_EQ(queue.dequeue(), 3);
+    EXPECT_TRUE(queue.empty());
 }
 
 TEST_F(QueueTest, SizeAndEmpty) {
@@ -51,9 +56,14 @@ TEST_F(QueueTest, CopyConstructor) {
     EXPECT_EQ(copyQueue.size(), 3);
     EXPECT_EQ(copyQueue.front(), 1);
 
+    // Изменяем копию, оригинал не должен измениться
     copyQueue.dequeue();
     EXPECT_EQ(copyQueue.front(), 2);
-    EXPECT_EQ(queue.front(), 1); // Оригинал не должен измениться
+    EXPECT_EQ(copyQueue.size(), 2);
+
+    // Оригинал должен остаться неизменным
+    EXPECT_EQ(queue.front(), 1);
+    EXPECT_EQ(queue.size(), 3);
 }
 
 TEST_F(QueueTest, MoveConstructor) {
@@ -66,17 +76,26 @@ TEST_F(QueueTest, MoveConstructor) {
 
 TEST_F(QueueTest, AssignmentOperator) {
     Queue<int> assignedQueue;
+    assignedQueue.enqueue(10); // Добавляем что-то перед присваиванием
+
     assignedQueue = queue;
     EXPECT_EQ(assignedQueue.size(), 3);
     EXPECT_EQ(assignedQueue.front(), 1);
 
+    // Изменяем присвоенную очередь, оригинал не должен измениться
     assignedQueue.dequeue();
     EXPECT_EQ(assignedQueue.front(), 2);
-    EXPECT_EQ(queue.front(), 1); // Оригинал не должен измениться
+    EXPECT_EQ(assignedQueue.size(), 2);
+
+    // Оригинал должен остаться неизменным
+    EXPECT_EQ(queue.front(), 1);
+    EXPECT_EQ(queue.size(), 3);
 }
 
 TEST_F(QueueTest, MoveAssignmentOperator) {
     Queue<int> movedQueue;
+    movedQueue.enqueue(10); // Добавляем что-то перед перемещением
+
     movedQueue = std::move(queue);
     EXPECT_EQ(movedQueue.size(), 3);
     EXPECT_EQ(movedQueue.front(), 1);
@@ -94,6 +113,27 @@ TEST_F(QueueTest, FIFOBehavior) {
     EXPECT_EQ(fifoQueue.dequeue(), 10);
     EXPECT_EQ(fifoQueue.dequeue(), 20);
     EXPECT_EQ(fifoQueue.dequeue(), 30);
+    EXPECT_TRUE(fifoQueue.empty());
+}
+
+TEST_F(QueueTest, MultipleOperations) {
+    Queue<int> testQueue;
+
+    // Серия операций enqueue/dequeue
+    for (int i = 0; i < 5; i++) {
+        testQueue.enqueue(i);
+    }
+
+    EXPECT_EQ(testQueue.size(), 5);
+    EXPECT_EQ(testQueue.dequeue(), 0);
+    EXPECT_EQ(testQueue.dequeue(), 1);
+
+    for (int i = 5; i < 8; i++) {
+        testQueue.enqueue(i);
+    }
+
+    EXPECT_EQ(testQueue.size(), 6); 
+    EXPECT_EQ(testQueue.dequeue(), 2);
 }
 
 // Тесты с пользовательскими типами данных
@@ -117,9 +157,5 @@ TEST(ComplexTypesTest, QueueWithCustomType) {
     EXPECT_EQ(personQueue.front(), p1);
     EXPECT_EQ(personQueue.dequeue(), p1);
     EXPECT_EQ(personQueue.dequeue(), p2);
-}
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    EXPECT_TRUE(personQueue.empty());
 }
