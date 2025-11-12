@@ -19,6 +19,8 @@ add_subdirectory(lib_steck)
 add_subdirectory(lib_queue)
 add_subdirectory(lib_list)
 add_subdirectory(Algorithm)
+add_subdirectory(lib_stack_by_list)
+add_subdirectory(lib_queue_by_list)
 
 option(BTEST "build test?" ON)        # указываем подключаем ли google-тесты (ON или YES) или нет (OFF или NO)
 
