@@ -96,18 +96,6 @@ TEST_F(QueueTest, FIFOBehavior) {
     EXPECT_EQ(fifoQueue.dequeue(), 30);
 }
 
-TEST_F(StackTest, LIFOBehavior) {
-    // Проверка поведения LIFO (Last-In-First-Out)
-    Stack<int> lifoStack;
-    lifoStack.push(10);
-    lifoStack.push(20);
-    lifoStack.push(30);
-
-    EXPECT_EQ(lifoStack.pop(), 30);
-    EXPECT_EQ(lifoStack.pop(), 20);
-    EXPECT_EQ(lifoStack.pop(), 10);
-}
-
 // Тесты с пользовательскими типами данных
 struct Person {
     std::string name;
@@ -117,19 +105,6 @@ struct Person {
         return name == other.name && age == other.age;
     }
 };
-
-TEST(ComplexTypesTest, StackWithCustomType) {
-    Stack<Person> personStack;
-    Person p1{ "Alice", 25 };
-    Person p2{ "Bob", 30 };
-
-    personStack.push(p1);
-    personStack.push(p2);
-
-    EXPECT_EQ(personStack.top(), p2);
-    EXPECT_EQ(personStack.pop(), p2);
-    EXPECT_EQ(personStack.pop(), p1);
-}
 
 TEST(ComplexTypesTest, QueueWithCustomType) {
     Queue<Person> personQueue;
