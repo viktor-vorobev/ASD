@@ -5,16 +5,20 @@
 class QueueTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        // явно создаем конкретную очередь и заполн€ем ее
+        queue = Queue<int>();  // явный вызов конструктора
         queue.enqueue(1);
         queue.enqueue(2);
         queue.enqueue(3);
     }
 
     void TearDown() override {
-        queue.clear();
+        if (!queue.empty()) {
+            queue.clear();
+        }
     }
 
-    Queue<int> queue;
+    Queue<int> queue;  // Ѕудет €вно инициализирована в SetUp()
 };
 
 TEST_F(QueueTest, EnqueueAndFront) {
