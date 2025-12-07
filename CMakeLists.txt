@@ -21,6 +21,10 @@ add_subdirectory(lib_list)
 add_subdirectory(Algorithm)
 add_subdirectory(lib_stack_by_list)
 add_subdirectory(lib_queue_by_list)
+add_subdirectory(lib_cycle)
+add_subdirectory(lib_dsu)
+add_subdirectory(lib_polynom)
+add_subdirectory(calculator)
 
 option(BTEST "build test?" ON)        # указываем подключаем ли google-тесты (ON или YES) или нет (OFF или NO)
 

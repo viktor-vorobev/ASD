@@ -14,7 +14,7 @@ private:
 
         Node(const T& value) : data(value), next(nullptr), prev(nullptr) {}
 
-        // Явно запрещаем копирование и присваивание узлов
+        // Запрещаем копирование и присваивание узлов
         Node(const Node&) = delete;
         Node& operator=(const Node&) = delete;
     };
@@ -39,7 +39,7 @@ private:
             head = head->next;
             delete temp;
         }
-        tail = nullptr;
+        head = tail = nullptr;
         list_size = 0;
     }
 
@@ -129,6 +129,21 @@ public:
             return current->data;
         }
 
+        const T& operator*() const {
+            if (current == nullptr) {
+                throw std::runtime_error("Dereferencing null iterator");
+            }
+            return current->data;
+        }
+
+        T* operator->() {
+            return &(current->data);
+        }
+
+        const T* operator->() const {
+            return &(current->data);
+        }
+
         Iterator& operator++() {
             if (current) {
                 current = current->next;
@@ -151,10 +166,57 @@ public:
         }
     };
 
+    class ConstIterator {
+    private:
+        const Node* current;
+
+    public:
+        ConstIterator(const Node* node) : current(node) {}
+
+        const T& operator*() const {
+            if (current == nullptr) {
+                throw std::runtime_error("Dereferencing null iterator");
+            }
+            return current->data;
+        }
+
+        const T* operator->() const {
+            return &(current->data);
+        }
+
+        ConstIterator& operator++() {
+            if (current) {
+                current = current->next;
+            }
+            return *this;
+        }
+
+        ConstIterator operator++(int) {
+            ConstIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        bool operator==(const ConstIterator& other) const {
+            return current == other.current;
+        }
+
+        bool operator!=(const ConstIterator& other) const {
+            return current != other.current;
+        }
+    };
+
+    // Методы для получения итераторов
     Iterator begin() { return Iterator(head); }
     Iterator end() { return Iterator(nullptr); }
 
-    // Вставка элементов
+    ConstIterator begin() const { return ConstIterator(head); }
+    ConstIterator end() const { return ConstIterator(nullptr); }
+
+    ConstIterator cbegin() const { return ConstIterator(head); }
+    ConstIterator cend() const { return ConstIterator(nullptr); }
+
+    // Добавление элементов
     void push_front(const T& value) {
         Node* new_node = new Node(value);
 
@@ -201,7 +263,7 @@ public:
         Node* new_node = new Node(value);
         Node* current = head;
 
-        // Находим узел на нужной позиции
+        // Находим узел на указанной позиции
         for (size_t i = 0; i < position; i++) {
             current = current->next;
         }
@@ -223,7 +285,7 @@ public:
 
         Node* temp = head;
 
-        if (head == tail) { // только один элемент
+        if (head == tail) { // Только один элемент
             head = tail = nullptr;
         }
         else {
@@ -242,7 +304,7 @@ public:
 
         Node* temp = tail;
 
-        if (head == tail) { // только один элемент
+        if (head == tail) { // Только один элемент
             head = tail = nullptr;
         }
         else {
@@ -274,7 +336,7 @@ public:
             current = current->next;
         }
 
-        // Удаляем current из середины списка
+        // Удаляем current из списка
         current->prev->next = current->next;
         current->next->prev = current->prev;
 
@@ -315,7 +377,7 @@ public:
         return -1;
     }
 
-    // Вывод (для отладки)
+    // Вывод для отладки
     void print() const {
         Node* current = head;
         std::cout << "[";
