@@ -1,10 +1,9 @@
-// polynom_tests.cpp
 #include <gtest/gtest.h>
 #include "polynom.h"
 #include <sstream>
 #include <cmath>
 
-// ==================== TESTS FOR MONOM ====================
+//TESTS FOR MONOM 
 
 TEST(MonomTest, DefaultConstructor) {
     Monom m;
@@ -366,7 +365,7 @@ TEST(MonomTest, StreamInput) {
     EXPECT_EQ(m.getDegree('y'), 3);
 }
 
-// ==================== TESTS FOR POLYNOM ====================
+// TESTS FOR POLYNOM 
 
 TEST(PolynomTest, DefaultConstructor) {
     Polynom p;
@@ -741,7 +740,7 @@ TEST(PolynomTest, OrderingPreservedAfterOperations) {
     EXPECT_EQ(resultStr.find("+ -"), std::string::npos);
 }
 
-// ==================== EDGE CASES ====================
+//  EDGE CASES
 
 TEST(EdgeCasesTest, MonomZeroFromString) {
     Monom m("0");
@@ -822,7 +821,7 @@ TEST(EdgeCasesTest, ChainOperations) {
     EXPECT_TRUE(hasX || hasY);
 }
 
-// ==================== PERFORMANCE TESTS ====================
+//PERFORMANCE TESTS 
 
 TEST(PerformanceTest, LargePolynomMultiplication) {
     // Создаем полиномы с несколькими членами

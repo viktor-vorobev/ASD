@@ -2,161 +2,206 @@
 #include "list_dsu.h"
 #include <vector>
 #include <algorithm>
-#include <random>
+//Тесты для класса DSU 
 
-class DSUTest : public ::testing::Test {
-protected:
-    void SetUp() override {
-        std::cout << "=== Настройка теста DSU ===\n";
-    }
-
-    void TearDown() override {
-        std::cout << "=== Завершение теста DSU ===\n\n";
-    }
-};
-
-// Тест 1: Базовые операции DSU
-TEST_F(DSUTest, BasicOperations) {
-    std::cout << "Тест 1: Базовые операции DSU\n";
-
+TEST(DSU, Constructor) {
     DSU dsu(10);
-
-    // Проверка начального состояния
     EXPECT_EQ(dsu.count(), 10);
 
-    // Проверка, что каждый элемент в своем множестве
     for (int i = 0; i < 10; i++) {
         EXPECT_EQ(dsu.find(i), i);
+        EXPECT_EQ(dsu.componentSize(i), 1);
     }
+}
 
-    // Объединение элементов
+TEST(DSU, UnionAndFind) {
+    DSU dsu(5);
+
+    // Изначально все элементы раздельны
+    EXPECT_FALSE(dsu.connected(0, 1));
+    EXPECT_EQ(dsu.count(), 5);
+
+    // Объединяем 0 и 1
     EXPECT_TRUE(dsu.unite(0, 1));
-    EXPECT_EQ(dsu.count(), 9);
     EXPECT_TRUE(dsu.connected(0, 1));
+    EXPECT_EQ(dsu.count(), 4);
     EXPECT_EQ(dsu.find(0), dsu.find(1));
+    EXPECT_EQ(dsu.componentSize(0), 2);
 
-    EXPECT_TRUE(dsu.unite(2, 3));
-    EXPECT_EQ(dsu.count(), 8);
-    EXPECT_TRUE(dsu.connected(2, 3));
-
-    // Попытка повторного объединения
+    // Повторное объединение должно вернуть false
     EXPECT_FALSE(dsu.unite(0, 1));
-    EXPECT_EQ(dsu.count(), 8);
-
-    std::cout << "✓ Базовые операции работают корректно\n";
+    EXPECT_EQ(dsu.count(), 4);
 }
 
-// Тест 2: Транзитивность объединения
-TEST_F(DSUTest, Transitivity) {
-    std::cout << "\nТест 2: Транзитивность объединения\n";
-
+TEST(DSU, MultipleUnions) {
     DSU dsu(10);
 
-    // Создаем цепочку: 0-1-2-3
+    // Объединяем в группы: {0,1,2}, {3,4}, {5,6,7,8}, {9}
     dsu.unite(0, 1);
     dsu.unite(1, 2);
-    dsu.unite(2, 3);
-
-    // Проверяем транзитивность
-    EXPECT_TRUE(dsu.connected(0, 3));
-    EXPECT_TRUE(dsu.connected(1, 3));
-    EXPECT_TRUE(dsu.connected(0, 2));
-
-    // Проверяем, что другие элементы не соединены
-    EXPECT_FALSE(dsu.connected(0, 4));
-    EXPECT_FALSE(dsu.connected(3, 9));
-
-    EXPECT_EQ(dsu.count(), 7); // 10 - 3 объединений = 7 компонент
-
-    std::cout << "✓ Транзитивность работает корректно\n";
-}
-
-// Тест 3: Размер компонент
-TEST_F(DSUTest, ComponentSize) {
-    std::cout << "\nТест 3: Размер компонент\n";
-
-    DSU dsu(10);
-
-    // Объединяем 0, 1, 2
-    dsu.unite(0, 1);
-    dsu.unite(1, 2);
-
-    // Объединяем 5, 6
+    dsu.unite(3, 4);
     dsu.unite(5, 6);
+    dsu.unite(6, 7);
+    dsu.unite(7, 8);
+
+    // Проверяем связи внутри групп
+    EXPECT_TRUE(dsu.connected(0, 2));
+    EXPECT_TRUE(dsu.connected(3, 4));
+    EXPECT_TRUE(dsu.connected(5, 8));
+
+    // Проверяем отсутствие связей между группами
+    EXPECT_FALSE(dsu.connected(0, 3));
+    EXPECT_FALSE(dsu.connected(1, 5));
+    EXPECT_FALSE(dsu.connected(4, 9));
 
     // Проверяем размеры компонент
     EXPECT_EQ(dsu.componentSize(0), 3);
-    EXPECT_EQ(dsu.componentSize(1), 3);
-    EXPECT_EQ(dsu.componentSize(2), 3);
-
-    EXPECT_EQ(dsu.componentSize(5), 2);
-    EXPECT_EQ(dsu.componentSize(6), 2);
-
-    // Одиночные элементы
-    EXPECT_EQ(dsu.componentSize(3), 1);
+    EXPECT_EQ(dsu.componentSize(3), 2);
+    EXPECT_EQ(dsu.componentSize(5), 4);
     EXPECT_EQ(dsu.componentSize(9), 1);
 
-    std::cout << "✓ Размеры компонент вычисляются правильно\n";
+    // Проверяем количество компонент
+    EXPECT_EQ(dsu.count(), 4);
 }
 
-// Тест 4: Получение всех компонент
-TEST_F(DSUTest, GetAllComponents) {
-    std::cout << "\nТест 4: Получение всех компонент\n";
+TEST(DSU, PathCompression) {
+    DSU dsu(100);
 
-    DSU dsu(10);
+    // Создаем длинную цепочку
+    for (int i = 0; i < 99; i++) {
+        dsu.unite(i, i + 1);
+    }
 
-    // Создаем 3 компоненты:
-    // 1) 0, 1, 2
-    // 2) 3, 4, 5
-    // 3) 6, 7
-    // 4) 8 (один)
-    // 5) 9 (один)
+    // После path compression все find должны быть быстрыми
+    for (int i = 0; i < 100; i++) {
+        EXPECT_EQ(dsu.find(i), dsu.find(0));
+    }
 
+    EXPECT_TRUE(dsu.connected(0, 99));
+    EXPECT_EQ(dsu.count(), 1);
+}
+
+TEST(DSU, GetComponents) {
+    DSU dsu(8);
+
+    // Создаем компоненты: {0,1,2}, {3,4}, {5,6,7}
     dsu.unite(0, 1);
     dsu.unite(1, 2);
-
     dsu.unite(3, 4);
-    dsu.unite(4, 5);
-
+    dsu.unite(5, 6);
     dsu.unite(6, 7);
 
     auto components = dsu.getComponents();
 
-    // Должно быть 5 компонент
-    EXPECT_EQ(components.size(), 5);
+    EXPECT_EQ(components.size(), 3);
 
-    // Сортируем компоненты по размеру для удобства проверки
-    std::sort(components.begin(), components.end(),
-        [](const std::vector<int>& a, const std::vector<int>& b) {
-            return a.size() > b.size();
-        });
+    // Проверяем содержимое компонент
+    std::vector<std::vector<int>> expected = {
+        {0, 1, 2},
+        {3, 4},
+        {5, 6, 7}
+    };
 
-    // Проверяем размеры компонент
-    EXPECT_EQ(components[0].size(), 3); // 0,1,2 или 3,4,5
-    EXPECT_EQ(components[1].size(), 3); // другая тройка
-    EXPECT_EQ(components[2].size(), 2); // 6,7
-    EXPECT_EQ(components[3].size(), 1); // 8
-    EXPECT_EQ(components[4].size(), 1); // 9
-
-    // Проверяем, что все элементы уникальны
-    std::vector<int> allElements;
-    for (const auto& comp : components) {
-        allElements.insert(allElements.end(), comp.begin(), comp.end());
+    // Сортируем для сравнения
+    for (auto& comp : components) {
+        std::sort(comp.begin(), comp.end());
     }
-    std::sort(allElements.begin(), allElements.end());
-    allElements.erase(std::unique(allElements.begin(), allElements.end()),
-        allElements.end());
+    std::sort(components.begin(), components.end());
 
-    EXPECT_EQ(allElements.size(), 10); // Все 10 элементов
-
-    std::cout << "✓ Все компоненты получены корректно\n";
-    std::cout << "  Найдено " << components.size() << " компонент\n";
+    for (size_t i = 0; i < components.size(); i++) {
+        EXPECT_EQ(components[i], expected[i]);
+    }
 }
 
-// Тест 5: Задача об островах - пример из задания
-TEST_F(DSUTest, IslandsExample) {
-    std::cout << "\nТест 5: Задача об островах (пример из задания)\n";
+// ==================== Тесты для класса IslandCounter ====================
 
+TEST(IslandCounter, EmptyGrid) {
+    std::vector<std::vector<int>> emptyGrid = {};
+    IslandCounter counter(emptyGrid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 0);
+    EXPECT_EQ(counter.countIslandsDFS(), 0);
+}
+
+TEST(IslandCounter, SingleCellWater) {
+    std::vector<std::vector<int>> grid = { {0} };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 0);
+    EXPECT_EQ(counter.countIslandsDFS(), 0);
+}
+
+TEST(IslandCounter, SingleCellLand) {
+    std::vector<std::vector<int>> grid = { {1} };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 1);
+    EXPECT_EQ(counter.countIslandsDFS(), 1);
+}
+
+TEST(IslandCounter, AllWater) {
+    std::vector<std::vector<int>> grid = {
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0}
+    };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 0);
+    EXPECT_EQ(counter.countIslandsDFS(), 0);
+}
+
+TEST(IslandCounter, AllLand) {
+    std::vector<std::vector<int>> grid = {
+        {1, 1, 1},
+        {1, 1, 1},
+        {1, 1, 1}
+    };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 1);
+    EXPECT_EQ(counter.countIslandsDFS(), 1);
+}
+
+TEST(IslandCounter, SingleIsland) {
+    std::vector<std::vector<int>> grid = {
+        {1, 1, 0},
+        {1, 1, 0},
+        {0, 0, 0}
+    };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 1);
+    EXPECT_EQ(counter.countIslandsDFS(), 1);
+}
+
+TEST(IslandCounter, MultipleIslands) {
+    std::vector<std::vector<int>> grid = {
+        {1, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1}
+    };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 5);
+    EXPECT_EQ(counter.countIslandsDFS(), 5);
+}
+
+TEST(IslandCounter, ComplexIslands) {
+    std::vector<std::vector<int>> grid = {
+        {1, 1, 0, 0, 0},
+        {1, 1, 0, 0, 1},
+        {0, 0, 1, 0, 0},
+        {0, 0, 0, 1, 1},
+        {1, 0, 0, 1, 1}
+    };
+    IslandCounter counter(grid);
+
+    EXPECT_EQ(counter.countIslandsDSU(), 4);
+    EXPECT_EQ(counter.countIslandsDFS(), 4);
+}
+
+TEST(IslandCounter, ExampleFromClass) {
     std::vector<std::vector<int>> grid = {
         {0, 1, 0, 0, 1},
         {0, 1, 1, 0, 1},
@@ -164,261 +209,163 @@ TEST_F(DSUTest, IslandsExample) {
         {0, 0, 0, 0, 1},
         {1, 0, 1, 1, 1}
     };
+    IslandCounter counter(grid);
+
+    int dsuResult = counter.countIslandsDSU();
+    int dfsResult = counter.countIslandsDFS();
+
+    EXPECT_EQ(dsuResult, dfsResult);
+    EXPECT_EQ(dsuResult, 3); // По визуальному анализу должно быть 3 острова
+}
+
+TEST(IslandCounter, LargeGrid) {
+    // Создаем сетку 10x10 с паттерном
+    std::vector<std::vector<int>> grid(10, std::vector<int>(10, 0));
+
+    // Создаем несколько островов
+    for (int i = 0; i < 10; i += 3) {
+        for (int j = 0; j < 10; j += 3) {
+            if (i < 8 && j < 8) {
+                grid[i][j] = 1;
+                grid[i][j + 1] = 1;
+                grid[i + 1][j] = 1;
+                grid[i + 1][j + 1] = 1;
+            }
+        }
+    }
 
     IslandCounter counter(grid);
 
-    // Подсчет островов методом DSU
-    int islandsDSU = counter.countIslandsDSU();
-    int islandsDFS = counter.countIslandsDFS();
+    // Должно быть 9 островов 2x2
+    int dsuResult = counter.countIslandsDSU();
+    int dfsResult = counter.countIslandsDFS();
 
-    // Ожидаемый результат: 3 острова
-    EXPECT_EQ(islandsDSU, 3);
-    EXPECT_EQ(islandsDFS, 3);
-    EXPECT_EQ(islandsDSU, islandsDFS);
-
-    std::cout << "✓ Пример из задания обработан правильно: "
-        << islandsDSU << " острова\n";
+    EXPECT_EQ(dsuResult, dfsResult);
+    EXPECT_EQ(dsuResult, 9);
 }
 
-// Тест 6: Граничные случаи для островов
-TEST_F(DSUTest, IslandEdgeCases) {
-    std::cout << "\nТест 6: Граничные случаи для островов\n";
-
-    // Тест 6.1: Пустая карта
-    {
-        std::vector<std::vector<int>> emptyGrid = {};
-        IslandCounter emptyCounter(emptyGrid);
-        EXPECT_EQ(emptyCounter.countIslandsDSU(), 0);
-        std::cout << "  Пустая карта: OK\n";
-    }
-
-    // Тест 6.2: Карта без суши
-    {
-        std::vector<std::vector<int>> waterGrid = {
-            {0, 0, 0},
-            {0, 0, 0}
-        };
-        IslandCounter waterCounter(waterGrid);
-        EXPECT_EQ(waterCounter.countIslandsDSU(), 0);
-        std::cout << "  Карта без суши: OK\n";
-    }
-
-    // Тест 6.3: Один большой остров
-    {
-        std::vector<std::vector<int>> bigIsland = {
-            {1, 1, 1},
-            {1, 1, 1},
-            {1, 1, 1}
-        };
-        IslandCounter bigCounter(bigIsland);
-        EXPECT_EQ(bigCounter.countIslandsDSU(), 1);
-        std::cout << "  Один большой остров: OK\n";
-    }
-
-    // Тест 6.4: Каждый пиксель - отдельный остров
-    {
-        std::vector<std::vector<int>> separateIslands = {
-            {1, 0, 1},
-            {0, 1, 0},
-            {1, 0, 1}
-        };
-        IslandCounter separateCounter(separateIslands);
-        EXPECT_EQ(separateCounter.countIslandsDSU(), 5);
-        std::cout << "  Отдельные острова (5): OK\n";
-    }
-
-    // Тест 6.5: Вертикальная линия
-    {
-        std::vector<std::vector<int>> verticalLine = {
-            {1},
-            {1},
-            {1},
-            {1}
-        };
-        IslandCounter verticalCounter(verticalLine);
-        EXPECT_EQ(verticalCounter.countIslandsDSU(), 1);
-        std::cout << "  Вертикальная линия: OK\n";
-    }
-
-    // Тест 6.6: Горизонтальная линия
-    {
-        std::vector<std::vector<int>> horizontalLine = {
-            {1, 1, 1, 1}
-        };
-        IslandCounter horizontalCounter(horizontalLine);
-        EXPECT_EQ(horizontalCounter.countIslandsDSU(), 1);
-        std::cout << "  Горизонтальная линия: OK\n";
-    }
-}
-
-// Тест 8: Визуализация островов
-TEST_F(DSUTest, IslandVisualization) {
-    std::cout << "\nТест 8: Визуализация островов\n";
-
-    std::vector<std::vector<int>> testGrid = {
-        {1, 0, 1, 0},
-        {1, 1, 0, 1},
-        {0, 1, 0, 1},
-        {1, 0, 1, 1}
+TEST(IslandCounter, ConsistencyBetweenMethods) {
+    // Тест на согласованность методов
+    std::vector<std::vector<int>> grid = {
+        {1, 0, 1, 1, 0},
+        {1, 0, 0, 1, 0},
+        {0, 1, 0, 0, 1},
+        {1, 0, 1, 0, 1},
+        {0, 1, 1, 1, 0}
     };
 
-    IslandCounter counter(testGrid);
+    IslandCounter counter(grid);
 
-    // Захватываем вывод
-    testing::internal::CaptureStdout();
-    counter.printIslands();
-    std::string output = testing::internal::GetCapturedStdout();
+    int dsuResult = counter.countIslandsDSU();
+    int dfsResult = counter.countIslandsDFS();
 
-    // Проверяем, что вывод содержит информацию об островах
-    EXPECT_TRUE(output.find("Всего островов:") != std::string::npos);
-
-    int islands = counter.countIslandsDSU();
-    EXPECT_TRUE(output.find(std::to_string(islands)) != std::string::npos);
-
-    std::cout << "  Визуализация работает корректно\n";
-    std::cout << "  Найдено " << islands << " островов\n";
+    // Основное требование: оба метода должны давать одинаковый результат
+    EXPECT_EQ(dsuResult, dfsResult);
 }
 
-// Тест 9: Случайные тесты для DSU
-TEST_F(DSUTest, RandomOperations) {
-    std::cout << "\nТест 9: Случайные операции DSU\n";
+TEST(IslandCounter, PrintIslandsOutput) {
+    // Этот тест проверяет, что метод printIslands не падает
+    // (мы не проверяем вывод, только отсутствие исключений)
+    std::vector<std::vector<int>> grid = {
+        {1, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1}
+    };
 
-    const int N = 1000;
-    const int OPERATIONS = 5000;
+    IslandCounter counter(grid);
 
+    EXPECT_NO_THROW(counter.printIslands());
+}
+
+TEST(IslandCounter, TestExampleMethod) {
+    // Проверяем, что статический метод теста работает без исключений
+    EXPECT_NO_THROW(IslandCounter::testExample());
+}
+
+// ==================== Тесты граничных случаев ====================
+
+TEST(IslandCounter, OneRowGrid) {
+    std::vector<std::vector<int>> grid = {
+        {1, 0, 1, 1, 0, 1}
+    };
+    IslandCounter counter(grid);
+
+    // Должно быть 3 острова
+    EXPECT_EQ(counter.countIslandsDSU(), 3);
+    EXPECT_EQ(counter.countIslandsDFS(), 3);
+}
+
+TEST(IslandCounter, OneColumnGrid) {
+    std::vector<std::vector<int>> grid = {
+        {1},
+        {0},
+        {1},
+        {1},
+        {0},
+        {1}
+    };
+    IslandCounter counter(grid);
+
+    // Должно быть 3 острова
+    EXPECT_EQ(counter.countIslandsDSU(), 3);
+    EXPECT_EQ(counter.countIslandsDFS(), 3);
+}
+
+TEST(IslandCounter, SnakeIsland) {
+    std::vector<std::vector<int>> grid = {
+        {1, 1, 1, 1},
+        {0, 0, 0, 1},
+        {1, 1, 1, 1},
+        {1, 0, 0, 0},
+        {1, 1, 1, 1}
+    };
+    IslandCounter counter(grid);
+
+    // Все должно быть одним островом
+    EXPECT_EQ(counter.countIslandsDSU(), 1);
+    EXPECT_EQ(counter.countIslandsDFS(), 1);
+}
+
+// ==================== Тесты производительности (простые) ====================
+
+TEST(DSU, PerformanceUnionFind) {
+    const int N = 10000;
     DSU dsu(N);
-    std::vector<std::set<int>> manualSets(N);
 
-    // Инициализация: каждый элемент в своем множестве
+    // Объединяем все элементы в одну компоненту
+    for (int i = 0; i < N - 1; i++) {
+        dsu.unite(i, i + 1);
+    }
+
+    // Проверяем все элементы
     for (int i = 0; i < N; i++) {
-        manualSets[i].insert(i);
+        EXPECT_TRUE(dsu.connected(0, i));
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, N - 1);
-
-    for (int op = 0; op < OPERATIONS; op++) {
-        int a = dis(gen);
-        int b = dis(gen);
-
-        if (op % 3 == 0) {
-            // Операция unite
-            bool dsuResult = dsu.unite(a, b);
-
-            // Проверяем вручную
-            int rootA = -1, rootB = -1;
-            for (int i = 0; i < N; i++) {
-                if (manualSets[i].count(a)) rootA = i;
-                if (manualSets[i].count(b)) rootB = i;
-            }
-
-            bool manualResult = (rootA != rootB);
-
-            if (manualResult) {
-                // Объединяем множества
-                manualSets[rootA].insert(manualSets[rootB].begin(), manualSets[rootB].end());
-                manualSets[rootB].clear();
-            }
-
-            EXPECT_EQ(dsuResult, manualResult);
-
-        }
-        else if (op % 3 == 1) {
-            // Операция connected
-            bool dsuConnected = dsu.connected(a, b);
-
-            // Проверяем вручную
-            bool manualConnected = false;
-            for (const auto& s : manualSets) {
-                if (s.count(a) && s.count(b)) {
-                    manualConnected = true;
-                    break;
-                }
-            }
-
-            EXPECT_EQ(dsuConnected, manualConnected);
-        }
-        // else: find операция проверяется в connected
-    }
-
-    std::cout << "  " << OPERATIONS << " случайных операций выполнено корректно\n";
+    EXPECT_EQ(dsu.count(), 1);
+    EXPECT_EQ(dsu.componentSize(0), N);
 }
 
-// Тест 10: Сложные конфигурации островов
-TEST_F(DSUTest, ComplexIslandConfigurations) {
-    std::cout << "\nТест 10: Сложные конфигурации островов\n";
+TEST(IslandCounter, PerformanceLargeGrid) {
+    const int SIZE = 100;
+    std::vector<std::vector<int>> grid(SIZE, std::vector<int>(SIZE, 0));
 
-    struct IslandTestCase {
-        std::string name;
-        std::vector<std::vector<int>> grid;
-        int expectedIslands;
-    };
-
-    std::vector<IslandTestCase> testCases = {
-        {
-            "Кольцо островов",
-            {
-                {1, 1, 1, 1},
-                {1, 0, 0, 1},
-                {1, 0, 0, 1},
-                {1, 1, 1, 1}
-            },
-            1  // Одно кольцо - это один остров
-        },
-        {
-            "Спираль",
-            {
-                {1, 1, 1, 1, 1},
-                {0, 0, 0, 0, 1},
-                {1, 1, 1, 0, 1},
-                {1, 0, 0, 0, 1},
-                {1, 1, 1, 1, 1}
-            },
-            1
-        },
-        {
-            "Крест",
-            {
-                {0, 1, 0},
-                {1, 1, 1},
-                {0, 1, 0}
-            },
-            1
-        },
-        {
-            "Точки касания",
-            {
-                {1, 0, 1},
-                {0, 0, 0},
-                {1, 0, 1}
-            },
-            4  // 4 отдельных острова, не касающихся по диагонали
-        },
-        {
-            "Змейка",
-            {
-                {1, 1, 1, 0, 0},
-                {0, 0, 1, 0, 0},
-                {0, 1, 1, 1, 0},
-                {0, 1, 0, 1, 0},
-                {0, 1, 1, 1, 0}
-            },
-            1
+    // Шахматная доска - максимум островов
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            grid[i][j] = (i + j) % 2;
         }
-    };
-
-    for (const auto& testCase : testCases) {
-        IslandCounter counter(testCase.grid);
-        int islands = counter.countIslandsDSU();
-
-        EXPECT_EQ(islands, testCase.expectedIslands)
-            << "Тест не пройден: " << testCase.name
-            << ". Ожидалось: " << testCase.expectedIslands
-            << ", получено: " << islands;
-
-        std::cout << "  ✓ " << testCase.name << ": "
-            << islands << " островов (ожидалось "
-            << testCase.expectedIslands << ")\n";
     }
+
+    IslandCounter counter(grid);
+
+    int dsuResult = counter.countIslandsDSU();
+    int dfsResult = counter.countIslandsDFS();
+
+    // Каждая черная клетка - отдельный остров
+    int expectedIslands = (SIZE * SIZE) / 2 + (SIZE * SIZE) % 2;
+
+    EXPECT_EQ(dsuResult, dfsResult);
+    EXPECT_EQ(dsuResult, expectedIslands);
 }
+

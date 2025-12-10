@@ -1,169 +1,147 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef QUEUE_LIST_BASED_H
+#define QUEUE_LIST_BASED_H
 
-#include <iostream>
+#include "list.h"
 #include <stdexcept>
 
 template<typename T>
 class Queue {
 private:
-    struct Node {
-        T data;
-        Node* next;
-        Node(const T& value) : data(value), next(nullptr) {}
-    };
-
-    Node* frontNode;
-    Node* backNode;
-    size_t queue_size;
+    List<T> list;  // Используем двусвязный список как основу
 
 public:
-    // Конструктор по умолчанию - ЯВНАЯ ИНИЦИАЛИЗАЦИЯ
-    Queue() : frontNode(nullptr), backNode(nullptr), queue_size(0) {
-        // Можно добавить отладочный вывод
-        // std::cout << "Queue constructor called" << std::endl;
-    }
+    // Конструкторы
+    Queue() = default;
 
-    // Конструктор копирования
-    Queue(const Queue& other) : frontNode(nullptr), backNode(nullptr), queue_size(0) {
-        Node* current = other.frontNode;
-        while (current != nullptr) {
-            enqueue(current->data);
-            current = current->next;
-        }
-    }
+    Queue(const Queue& other) : list(other.list) {}
 
-    // Конструктор перемещения
-    Queue(Queue&& other) noexcept
-        : frontNode(other.frontNode), backNode(other.backNode), queue_size(other.queue_size) {
-        other.frontNode = nullptr;
-        other.backNode = nullptr;
-        other.queue_size = 0;
-    }
+    Queue(Queue&& other) noexcept : list(std::move(other.list)) {}
 
-    // Деструктор
-    ~Queue() {
-        clear();
-    }
+    // Деструктор (не нужен явно, List сам очистится)
+    ~Queue() = default;
 
-    // Оператор присваивания
+    // Операторы присваивания
     Queue& operator=(const Queue& other) {
         if (this != &other) {
-            clear();
-            Node* current = other.frontNode;
-            while (current != nullptr) {
-                enqueue(current->data);
-                current = current->next;
-            }
+            list = other.list;
         }
         return *this;
     }
 
-    // Оператор перемещающего присваивания
     Queue& operator=(Queue&& other) noexcept {
         if (this != &other) {
-            clear();
-            frontNode = other.frontNode;
-            backNode = other.backNode;
-            queue_size = other.queue_size;
-
-            other.frontNode = nullptr;
-            other.backNode = nullptr;
-            other.queue_size = 0;
+            list = std::move(other.list);
         }
         return *this;
     }
 
-    // Добавление элемента в очередь
+    // Основные операции очереди
+
+    // Добавление элемента в конец (enqueue)
     void enqueue(const T& value) {
-        Node* newNode = new Node(value);
-
-        if (empty()) {
-            frontNode = backNode = newNode;
-        }
-        else {
-            backNode->next = newNode;
-            backNode = newNode;
-        }
-        queue_size++;
+        list.push_back(value);
     }
 
-    // Удаление и возврат первого элемента
-    T dequeue() {
-        if (empty()) {
-            throw std::runtime_error("Queue is empty");
-        }
-
-        Node* temp = frontNode;
-        T value = temp->data;
-
-        frontNode = frontNode->next;
-        if (frontNode == nullptr) {
-            backNode = nullptr; // Очередь стала пустой
-        }
-
-        delete temp;
-        queue_size--;
-        return value;
+    // Добавление с перемещением (C++11)
+    void enqueue(T&& value) {
+        list.push_back(std::move(value));
     }
 
-    // Просмотр первого элемента без удаления
+    // Удаление элемента из начала (dequeue)
+    void dequeue() {
+        if (empty()) {
+            throw std::runtime_error("Cannot dequeue from empty queue");
+        }
+        list.pop_front();
+    }
+
+    // Доступ к первому элементу (front)
     T& front() {
         if (empty()) {
             throw std::runtime_error("Queue is empty");
         }
-        return frontNode->data;
+        return list.front();
     }
 
     const T& front() const {
         if (empty()) {
             throw std::runtime_error("Queue is empty");
         }
-        return frontNode->data;
+        return list.front();
     }
 
-    // Просмотр последнего элемента
+    // Доступ к последнему элементу (back)
     T& back() {
         if (empty()) {
             throw std::runtime_error("Queue is empty");
         }
-        return backNode->data;
+        return list.back();
     }
 
     const T& back() const {
         if (empty()) {
             throw std::runtime_error("Queue is empty");
         }
-        return backNode->data;
+        return list.back();
     }
 
     // Проверка на пустоту
     bool empty() const {
-        return frontNode == nullptr;
+        return list.empty();
     }
 
     // Размер очереди
     size_t size() const {
-        return queue_size;
+        return list.size();
     }
 
     // Очистка очереди
     void clear() {
-        while (!empty()) {
-            dequeue();
-        }
+        list.clear();
+    }
+
+    // Итераторы
+    typename List<T>::Iterator begin() {
+        return list.begin();
+    }
+
+    typename List<T>::Iterator end() {
+        return list.end();
+    }
+
+    typename List<T>::ConstIterator begin() const {
+        return list.begin();
+    }
+
+    typename List<T>::ConstIterator end() const {
+        return list.end();
+    }
+
+    typename List<T>::ConstIterator cbegin() const {
+        return list.cbegin();
+    }
+
+    typename List<T>::ConstIterator cend() const {
+        return list.cend();
     }
 
     // Вывод для отладки
     void print() const {
-        Node* current = frontNode;
-        std::cout << "Queue: ";
-        while (current != nullptr) {
-            std::cout << current->data << " ";
-            current = current->next;
-        }
-        std::cout << std::endl;
+        std::cout << "Queue (front to back): ";
+        list.print();
+    }
+
+    // Проверка наличия элемента
+    bool contains(const T& value) const {
+        return list.contains(value);
+    }
+
+    // Поиск элемента
+    int find(const T& value) const {
+        return list.find(value);
     }
 };
 
-#endif // QUEUE_H
+
+
+#endif // QUEUE_LIST_BASED_H
