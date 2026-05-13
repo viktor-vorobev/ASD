@@ -28,6 +28,7 @@ add_subdirectory(lib_tvector)
 add_subdirectory(lib_itables)
 add_subdirectory(lib_tables_dif)
 add_subdirectory(calculator)
+add_subdirectory(lib_tree)
 
 option(BTEST "build test?" ON)        # указываем подключаем ли google-тесты (ON или YES) или нет (OFF или NO)
 

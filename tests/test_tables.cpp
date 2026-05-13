@@ -6,6 +6,7 @@
 #include "1_table.cpp"
 #include "2_table.cpp"
 #include "3_table.cpp"
+#include "4_table.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ void expectUnorderedEquality(const vector<T>& actual, const vector<T>& expected)
     }
 }
 
-// ========== ТЕСТЫ ДЛЯ UnsortedTableOnArr ==========
+// UnsortedTableOnArr 
 
 class UnsortedTableOnArrTest : public ::testing::Test {
 protected:
@@ -63,7 +64,7 @@ TEST_F(UnsortedTableOnArrTest, GetValues) {
     expectUnorderedEquality(values, expected);
 }
 
-// ========== ТЕСТЫ ДЛЯ SortedTableOnArr ==========
+// SortedTableOnArr
 
 class SortedTableOnArrTest : public ::testing::Test {
 protected:
@@ -93,7 +94,7 @@ TEST_F(SortedTableOnArrTest, BinarySearchWorks) {
     EXPECT_EQ(tableInt.find(4), 400);
 }
 
-// ========== ТЕСТЫ ДЛЯ UnsortedTableOnList ==========
+//  UnsortedTableOnList 
 
 class UnsortedTableOnListTest : public ::testing::Test {
 protected:
@@ -126,7 +127,7 @@ TEST_F(UnsortedTableOnListTest, GetKeys) {
     expectUnorderedEquality(keys, expected);
 }
 
-// ========== ТЕСТЫ С ПОЛИНОМАМИ ==========
+// с полиномами
 
 TEST(PolynomTableTests, BasicOperations) {
     UnsortedTableOnArr<string, Polynom> table;
@@ -143,7 +144,7 @@ TEST(PolynomTableTests, BasicOperations) {
     EXPECT_DOUBLE_EQ(table.find("p2").evaluate(values), 25.0);
 }
 
-// ========== ТЕСТЫ НА ИСКЛЮЧЕНИЯ ==========
+// на исключения
 
 TEST(TableExceptionTests, FindNonExistent) {
     UnsortedTableOnArr<int, int> table;
@@ -155,7 +156,221 @@ TEST(TableExceptionTests, RemoveNonExistent) {
     EXPECT_THROW(table.remove(1), TableException);
 }
 
-// ========== MAIN ==========
+//  UnorderedTreeTable 
+
+class UnorderedTreeTableTest : public ::testing::Test {
+protected:
+    UnorderedTreeTable<int, std::string> int_str_table;
+    UnorderedTreeTable<std::string, double> str_double_table;
+
+    void SetUp() override {
+        // Пустые таблицы
+    }
+};
+
+// Тест создания таблицы
+TEST_F(UnorderedTreeTableTest, CreateEmptyTable) {
+    EXPECT_TRUE(int_str_table.empty());
+    EXPECT_EQ(int_str_table.size(), 0);
+    EXPECT_TRUE(str_double_table.empty());
+    EXPECT_EQ(str_double_table.size(), 0);
+}
+
+// Тест вставки
+TEST_F(UnorderedTreeTableTest, InsertRecords) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+    int_str_table.insert(3, "three");
+
+    EXPECT_EQ(int_str_table.size(), 3);
+    EXPECT_TRUE(int_str_table.contains(1));
+    EXPECT_TRUE(int_str_table.contains(2));
+    EXPECT_TRUE(int_str_table.contains(3));
+    EXPECT_FALSE(int_str_table.contains(4));
+}
+
+// Тест вставки дубликата
+TEST_F(UnorderedTreeTableTest, InsertDuplicate) {
+    int_str_table.insert(1, "one");
+    EXPECT_THROW(int_str_table.insert(1, "another_one"), std::runtime_error);
+}
+
+// Тест поиска
+TEST_F(UnorderedTreeTableTest, Find) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+
+    std::string* val = int_str_table.find(1);
+    ASSERT_NE(val, nullptr);
+    EXPECT_EQ(*val, "one");
+
+    val = int_str_table.find(2);
+    ASSERT_NE(val, nullptr);
+    EXPECT_EQ(*val, "two");
+
+    val = int_str_table.find(3);
+    EXPECT_EQ(val, nullptr);
+}
+
+// Тест const find
+TEST_F(UnorderedTreeTableTest, ConstFind) {
+    int_str_table.insert(1, "one");
+    const auto& const_table = int_str_table;
+
+    const std::string* val = const_table.find(1);
+    ASSERT_NE(val, nullptr);
+    EXPECT_EQ(*val, "one");
+}
+
+// Тест удаления
+TEST_F(UnorderedTreeTableTest, Erase) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+    int_str_table.insert(3, "three");
+
+    int_str_table.erase(2);
+    EXPECT_EQ(int_str_table.size(), 2);
+    EXPECT_TRUE(int_str_table.contains(1));
+    EXPECT_FALSE(int_str_table.contains(2));
+    EXPECT_TRUE(int_str_table.contains(3));
+}
+
+// Тест удаления несуществующего ключа
+TEST_F(UnorderedTreeTableTest, EraseNonExistent) {
+    int_str_table.insert(1, "one");
+    EXPECT_THROW(int_str_table.erase(2), std::runtime_error);
+}
+
+// Тест оператора []
+TEST_F(UnorderedTreeTableTest, OperatorBrackets) {
+    int_str_table.insert(1, "one");
+    EXPECT_EQ(int_str_table[1], "one");
+
+    int_str_table[1] = "modified_one";
+    EXPECT_EQ(int_str_table[1], "modified_one");
+
+    // Несуществующий ключ должен создать новую запись
+    int_str_table[2] = "two";
+    EXPECT_EQ(int_str_table[2], "two");
+    EXPECT_EQ(int_str_table.size(), 2);
+}
+
+// Тест const оператора []
+TEST_F(UnorderedTreeTableTest, ConstOperatorBrackets) {
+    int_str_table.insert(1, "one");
+    const auto& const_table = int_str_table;
+    EXPECT_EQ(const_table[1], "one");
+}
+
+// Тест очистки
+TEST_F(UnorderedTreeTableTest, Clear) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+    int_str_table.clear();
+    EXPECT_TRUE(int_str_table.empty());
+    EXPECT_EQ(int_str_table.size(), 0);
+    EXPECT_FALSE(int_str_table.contains(1));
+}
+
+// Тест сравнения
+TEST_F(UnorderedTreeTableTest, Compare) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+
+    UnorderedTreeTable<int, std::string> other;
+    other.insert(1, "one");
+    other.insert(2, "two");
+
+    EXPECT_TRUE(int_str_table == other);
+
+    other.insert(3, "three");
+    EXPECT_FALSE(int_str_table == other);
+}
+
+// Тест getAllRecords
+TEST_F(UnorderedTreeTableTest, GetAllRecords) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+
+    auto records = int_str_table.getAllRecords();
+    EXPECT_EQ(records.size(), 2);
+
+    bool found_one = false, found_two = false;
+    for (const auto& rec : records) {
+        if (rec.key == 1 && rec.value == "one") found_one = true;
+        if (rec.key == 2 && rec.value == "two") found_two = true;
+    }
+    EXPECT_TRUE(found_one);
+    EXPECT_TRUE(found_two);
+}
+
+// Тест обходов дерева таблицы
+TEST_F(UnorderedTreeTableTest, Traversals) {
+    int_str_table.insert(5, "five");
+    int_str_table.insert(1, "one");
+    int_str_table.insert(3, "three");
+    int_str_table.insert(7, "seven");
+    int_str_table.insert(2, "two");
+    int_str_table.insert(4, "four");
+
+    // Проверяем, что методы не падают и возвращают непустые строки
+    EXPECT_FALSE(int_str_table.traversePreOrder().empty());
+    EXPECT_FALSE(int_str_table.traverseInOrder().empty());
+    EXPECT_FALSE(int_str_table.traversePostOrder().empty());
+    EXPECT_FALSE(int_str_table.traverseLevelOrder().empty());
+}
+
+// Тест красивого вывода дерева
+TEST_F(UnorderedTreeTableTest, PrintTree) {
+    int_str_table.insert(5, "five");
+    int_str_table.insert(3, "three");
+    int_str_table.insert(7, "seven");
+
+    testing::internal::CaptureStdout();
+    int_str_table.printTree();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+}
+
+// Тест с другим типом данных
+TEST_F(UnorderedTreeTableTest, StringDoubleTable) {
+    str_double_table.insert("pi", 3.14159);
+    str_double_table.insert("e", 2.71828);
+
+    EXPECT_EQ(str_double_table.size(), 2);
+    EXPECT_TRUE(str_double_table.contains("pi"));
+    EXPECT_TRUE(str_double_table.contains("e"));
+
+    double* val = str_double_table.find("pi");
+    ASSERT_NE(val, nullptr);
+    EXPECT_DOUBLE_EQ(*val, 3.14159);
+}
+
+// Тест копирования таблицы
+TEST_F(UnorderedTreeTableTest, CopyTable) {
+    int_str_table.insert(1, "one");
+    int_str_table.insert(2, "two");
+
+    UnorderedTreeTable<int, std::string> copy(int_str_table);
+    EXPECT_EQ(copy.size(), 2);
+    EXPECT_TRUE(copy.contains(1));
+    EXPECT_TRUE(copy.contains(2));
+}
+
+// Тест присваивания таблицы
+TEST_F(UnorderedTreeTableTest, AssignTable) {
+    int_str_table.insert(1, "one");
+
+    UnorderedTreeTable<int, std::string> other;
+    other.insert(10, "ten");
+    other = int_str_table;
+
+    EXPECT_EQ(other.size(), 1);
+    EXPECT_TRUE(other.contains(1));
+    EXPECT_FALSE(other.contains(10));
+}
+
+//  MAIN 
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
