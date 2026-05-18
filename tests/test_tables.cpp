@@ -7,6 +7,7 @@
 #include "2_table.cpp"
 #include "3_table.cpp"
 #include "4_table.h"
+#include "5_table.cpp"
 
 using namespace std;
 
@@ -368,6 +369,472 @@ TEST_F(UnorderedTreeTableTest, AssignTable) {
     EXPECT_EQ(other.size(), 1);
     EXPECT_TRUE(other.contains(1));
     EXPECT_FALSE(other.contains(10));
+}
+
+class TreeTableTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Инициализация перед каждым тестом
+    }
+
+    void TearDown() override {
+        // Очистка после каждого теста
+    }
+};
+
+// Тест 1: Создание пустой таблицы
+TEST_F(TreeTableTest, EmptyTable) {
+    TreeTable<int, std::string> table;
+
+    EXPECT_TRUE(table.isEmpty());
+    EXPECT_EQ(0, table.size());
+}
+
+// Тест 2: Вставка элементов
+TEST_F(TreeTableTest, InsertElements) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+
+    EXPECT_FALSE(table.isEmpty());
+    EXPECT_EQ(5, table.size());
+
+    EXPECT_TRUE(table.contains(5));
+    EXPECT_TRUE(table.contains(3));
+    EXPECT_TRUE(table.contains(7));
+    EXPECT_TRUE(table.contains(1));
+    EXPECT_TRUE(table.contains(4));
+    EXPECT_FALSE(table.contains(2));
+}
+
+// Тест 3: Поиск элементов
+TEST_F(TreeTableTest, FindElements) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+
+    EXPECT_EQ("five", table.find(5));
+    EXPECT_EQ("three", table.find(3));
+    EXPECT_EQ("seven", table.find(7));
+
+    EXPECT_THROW(table.find(10), TableException);
+}
+
+// Тест 4: Обновление существующих элементов
+TEST_F(TreeTableTest, UpdateElements) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(5, "FIVE");
+
+    EXPECT_EQ(1, table.size());
+    EXPECT_EQ("FIVE", table.find(5));
+}
+
+// Тест 5: Оператор []
+TEST_F(TreeTableTest, OperatorBrackets) {
+    TreeTable<int, std::string> table;
+
+    table[5] = "five";
+    table[3] = "three";
+
+    EXPECT_EQ("five", table[5]);
+    EXPECT_EQ("three", table[3]);
+    EXPECT_EQ(2, table.size());
+
+    // Несуществующий ключ должен создать элемент с значением по умолчанию
+    std::string defaultValue = table[10];
+    EXPECT_EQ("", defaultValue); // Для std::string значение по умолчанию - пустая строка
+    EXPECT_EQ(3, table.size());
+}
+
+// Тест 6: Удаление листа
+TEST_F(TreeTableTest, RemoveLeafNode) {
+    TreeTable<int, std::string> table;
+
+    // Создаем дерево
+    //       5
+    //    /     \
+    //   3       7
+    //  / \     /
+    // 1   4   6
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+    table.insert(6, "six");
+
+    EXPECT_EQ(6, table.size());
+
+    // Удаляем лист (4)
+    table.remove(4);
+
+    EXPECT_EQ(5, table.size());
+    EXPECT_FALSE(table.contains(4));
+    EXPECT_TRUE(table.contains(5));
+    EXPECT_TRUE(table.contains(3));
+    EXPECT_TRUE(table.contains(7));
+    EXPECT_TRUE(table.contains(1));
+    EXPECT_TRUE(table.contains(6));
+}
+
+// Тест 7: Удаление узла с одним ребенком (правым)
+TEST_F(TreeTableTest, RemoveNodeWithOneRightChild) {
+    TreeTable<int, std::string> table;
+
+    //     5
+    //      \
+    //       7
+    //        \
+    //         9
+    table.insert(5, "five");
+    table.insert(7, "seven");
+    table.insert(9, "nine");
+
+    EXPECT_EQ(3, table.size());
+
+    // Удаляем узел 7 (имеет правого ребенка 9)
+    table.remove(7);
+
+    EXPECT_EQ(2, table.size());
+    EXPECT_FALSE(table.contains(7));
+    EXPECT_TRUE(table.contains(5));
+    EXPECT_TRUE(table.contains(9));
+}
+
+// Тест 8: Удаление узла с одним ребенком (левым)
+TEST_F(TreeTableTest, RemoveNodeWithOneLeftChild) {
+    TreeTable<int, std::string> table;
+
+    //     9
+    //    /
+    //   7
+    //  /
+    // 5
+    table.insert(9, "nine");
+    table.insert(7, "seven");
+    table.insert(5, "five");
+
+    EXPECT_EQ(3, table.size());
+
+    // Удаляем узел 7 (имеет левого ребенка 5)
+    table.remove(7);
+
+    EXPECT_EQ(2, table.size());
+    EXPECT_FALSE(table.contains(7));
+    EXPECT_TRUE(table.contains(9));
+    EXPECT_TRUE(table.contains(5));
+}
+
+// Тест 9: Удаление узла с двумя детьми
+TEST_F(TreeTableTest, RemoveNodeWithTwoChildren) {
+    TreeTable<int, std::string> table;
+
+    //       5
+    //    /     \
+    //   3       7
+    //  / \     / \
+    // 1   4   6   8
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+    table.insert(6, "six");
+    table.insert(8, "eight");
+
+    EXPECT_EQ(7, table.size());
+
+    // Удаляем корень (5) - имеет двух детей
+    table.remove(5);
+
+    EXPECT_EQ(6, table.size());
+    EXPECT_FALSE(table.contains(5));
+    EXPECT_TRUE(table.contains(3));
+    EXPECT_TRUE(table.contains(7));
+    EXPECT_TRUE(table.contains(1));
+    EXPECT_TRUE(table.contains(4));
+    EXPECT_TRUE(table.contains(6));
+    EXPECT_TRUE(table.contains(8));
+}
+
+// Тест 10: Удаление корня (единственного узла)
+TEST_F(TreeTableTest, RemoveOnlyRoot) {
+    TreeTable<int, std::string> table;
+
+    table.insert(42, "answer");
+    EXPECT_EQ(1, table.size());
+
+    table.remove(42);
+    EXPECT_TRUE(table.isEmpty());
+    EXPECT_EQ(0, table.size());
+    EXPECT_THROW(table.find(42), TableException);
+}
+
+// Тест 11: Удаление несуществующего элемента
+TEST_F(TreeTableTest, RemoveNonExistentElement) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+
+    EXPECT_THROW(table.remove(10), TableException);
+    EXPECT_EQ(2, table.size());
+}
+
+// Тест 12: Получение всех ключей
+TEST_F(TreeTableTest, GetKeys) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+    table.insert(6, "six");
+    table.insert(8, "eight");
+
+    std::vector<int> keys = table.getKeys();
+
+    // Ключи должны быть отсортированы (in-order обход)
+    EXPECT_EQ(7, keys.size());
+    EXPECT_EQ(1, keys[0]);
+    EXPECT_EQ(3, keys[1]);
+    EXPECT_EQ(4, keys[2]);
+    EXPECT_EQ(5, keys[3]);
+    EXPECT_EQ(6, keys[4]);
+    EXPECT_EQ(7, keys[5]);
+    EXPECT_EQ(8, keys[6]);
+}
+
+// Тест 13: Получение всех значений
+TEST_F(TreeTableTest, GetValues) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+
+    std::vector<std::string> values = table.getValues();
+
+    EXPECT_EQ(5, values.size());
+    EXPECT_EQ("one", values[0]);
+    EXPECT_EQ("three", values[1]);
+    EXPECT_EQ("four", values[2]);
+    EXPECT_EQ("five", values[3]);
+    EXPECT_EQ("seven", values[4]);
+}
+
+// Тест 14: Проверка корректности BST
+TEST_F(TreeTableTest, IsValidBST) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+
+    EXPECT_TRUE(table.isValidBST());
+}
+
+// Тест 15: Сериализация и десериализация
+TEST_F(TreeTableTest, SerializeDeserialize) {
+    TreeTable<int, std::string> table1;
+
+    table1.insert(5, "five");
+    table1.insert(3, "three");
+    table1.insert(7, "seven");
+    table1.insert(1, "one");
+
+    std::string data = table1.serialize();
+    EXPECT_FALSE(data.empty());
+
+    TreeTable<int, std::string> table2;
+    table2.deserialize(data);
+
+    EXPECT_EQ(table1.size(), table2.size());
+    EXPECT_TRUE(table2.contains(5));
+    EXPECT_TRUE(table2.contains(3));
+    EXPECT_TRUE(table2.contains(7));
+    EXPECT_TRUE(table2.contains(1));
+    EXPECT_EQ("five", table2.find(5));
+    EXPECT_EQ("three", table2.find(3));
+}
+
+// Тест 16: Копирование таблицы
+TEST_F(TreeTableTest, CopyTable) {
+    TreeTable<int, std::string> table1;
+
+    table1.insert(5, "five");
+    table1.insert(3, "three");
+    table1.insert(7, "seven");
+
+    TreeTable<int, std::string> table2 = table1;
+
+    EXPECT_EQ(table1.size(), table2.size());
+    EXPECT_TRUE(table2.contains(5));
+    EXPECT_TRUE(table2.contains(3));
+    EXPECT_TRUE(table2.contains(7));
+
+    // Изменение копии не должно влиять на оригинал
+    table2.insert(1, "one");
+    EXPECT_EQ(4, table2.size());
+    EXPECT_EQ(3, table1.size());
+}
+
+// Тест 17: Очистка таблицы
+TEST_F(TreeTableTest, ClearTable) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+
+    EXPECT_FALSE(table.isEmpty());
+    EXPECT_EQ(3, table.size());
+
+    table.clear();
+
+    EXPECT_TRUE(table.isEmpty());
+    EXPECT_EQ(0, table.size());
+    EXPECT_THROW(table.find(5), TableException);
+}
+
+// Тест 18: Высота дерева
+TEST_F(TreeTableTest, TreeHeight) {
+    TreeTable<int, std::string> table;
+
+    EXPECT_EQ(0, table.getHeight());
+
+    table.insert(5, "five");
+    EXPECT_EQ(1, table.getHeight());
+
+    table.insert(3, "three");
+    EXPECT_EQ(2, table.getHeight());
+
+    table.insert(7, "seven");
+    EXPECT_EQ(2, table.getHeight());
+
+    table.insert(1, "one");
+    EXPECT_EQ(3, table.getHeight());
+}
+
+// Тест 19: Работа с разными типами ключей (строка)
+TEST_F(TreeTableTest, StringKeys) {
+    TreeTable<std::string, int> table;
+
+    table.insert("apple", 5);
+    table.insert("banana", 3);
+    table.insert("cherry", 7);
+
+    EXPECT_TRUE(table.contains("apple"));
+    EXPECT_TRUE(table.contains("banana"));
+    EXPECT_TRUE(table.contains("cherry"));
+    EXPECT_FALSE(table.contains("date"));
+
+    EXPECT_EQ(5, table.find("apple"));
+    EXPECT_EQ(3, table.find("banana"));
+    EXPECT_EQ(7, table.find("cherry"));
+
+    table["apple"] = 10;
+    EXPECT_EQ(10, table["apple"]);
+}
+
+// Тест 20: Работа с разными типами значений (double)
+TEST_F(TreeTableTest, DoubleValues) {
+    TreeTable<int, double> table;
+
+    table.insert(1, 1.5);
+    table.insert(2, 2.7);
+    table.insert(3, 3.14);
+
+    EXPECT_DOUBLE_EQ(1.5, table.find(1));
+    EXPECT_DOUBLE_EQ(2.7, table.find(2));
+    EXPECT_DOUBLE_EQ(3.14, table.find(3));
+}
+
+// Тест 21: Последовательная вставка и удаление
+TEST_F(TreeTableTest, SequentialInsertRemove) {
+    TreeTable<int, std::string> table;
+
+    for (int i = 0; i < 100; i++) {
+        table.insert(i, "value_" + std::to_string(i));
+    }
+
+    EXPECT_EQ(100, table.size());
+
+    for (int i = 0; i < 100; i++) {
+        EXPECT_TRUE(table.contains(i));
+    }
+
+    for (int i = 0; i < 100; i += 2) {
+        table.remove(i);
+    }
+
+    EXPECT_EQ(50, table.size());
+
+    for (int i = 0; i < 100; i++) {
+        if (i % 2 == 0) {
+            EXPECT_FALSE(table.contains(i));
+        }
+        else {
+            EXPECT_TRUE(table.contains(i));
+        }
+    }
+}
+
+// Тест 22: toString выводит упорядоченные элементы
+TEST_F(TreeTableTest, ToStringOrderedOutput) {
+    TreeTable<int, std::string> table;
+
+    table.insert(5, "five");
+    table.insert(3, "three");
+    table.insert(7, "seven");
+    table.insert(1, "one");
+    table.insert(4, "four");
+
+    std::string output = table.toString();
+
+    // Проверяем порядок: 1, 3, 4, 5, 7
+    size_t pos1 = output.find("1 => one");
+    size_t pos3 = output.find("3 => three");
+    size_t pos4 = output.find("4 => four");
+    size_t pos5 = output.find("5 => five");
+    size_t pos7 = output.find("7 => seven");
+
+    EXPECT_LT(pos1, pos3);
+    EXPECT_LT(pos3, pos4);
+    EXPECT_LT(pos4, pos5);
+    EXPECT_LT(pos5, pos7);
+}
+
+// Тест 23: Исключения при поиске в пустой таблице
+TEST_F(TreeTableTest, ExceptionsInEmptyTable) {
+    TreeTable<int, std::string> table;
+
+    EXPECT_THROW(table.find(1), TableException);
+    EXPECT_THROW(table.remove(1), TableException);
+    EXPECT_NO_THROW(table.insert(1, "one"));
+}
+
+// Тест 24: Перезапись значения через оператор []
+TEST_F(TreeTableTest, OverwriteThroughOperator) {
+    TreeTable<int, std::string> table;
+
+    table[1] = "first";
+    EXPECT_EQ("first", table[1]);
+
+    table[1] = "second";
+    EXPECT_EQ("second", table[1]);
+    EXPECT_EQ(1, table.size());
 }
 
 //  MAIN 
