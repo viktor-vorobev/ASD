@@ -4,9 +4,7 @@
 #include "bst.h"
 #include "polynom.h"
 
-// ==========================================
 // БЛОК 1: ТЕСТЫ СПЕЦИФИКИ BST (ТИПЫ ИНТ)
-// ==========================================
 
 TEST(BSTStandardTest, InitialState) {
     BST<int, std::string> tree;
@@ -91,9 +89,7 @@ TEST(BSTStandardTest, DeepCopyAndMoveSemantics) {
     EXPECT_TRUE(original.empty());
 }
 
-// ==========================================
 // БЛОК 2: ИНТЕГРАЦИОННЫЕ ТЕСТЫ С POLYNOM
-// ==========================================
 
 TEST(BSTPolynomIntegration, PolynomAsValue) {
     // Ключ — ID (int), значение — Полином
