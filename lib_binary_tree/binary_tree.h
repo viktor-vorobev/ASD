@@ -1,7 +1,7 @@
 #ifndef BINARY_TREE_H
 #define BINARY_TREE_H
 
-#include "queue.h" // Используем твою кастомную очередь
+#include "queue.h"
 #include <functional>
 #include <iostream>
 #include <string>
@@ -58,9 +58,59 @@ private:
         printTreeHelper(node->right, level + 1, "R--->", printNode);
     }
 
+    // Рекурсивное копирование узлов для конструктора копирования
+    TreeNode<T>* copyHelper(TreeNode<T>* node) {
+        if (!node) return nullptr;
+
+        TreeNode<T>* newNode = new TreeNode<T>(node->data);
+        try {
+            newNode->left = copyHelper(node->left);
+            newNode->right = copyHelper(node->right);
+        }
+        catch (...) {
+            clearHelper(newNode); 
+            throw;
+        }
+        return newNode;
+    }
+
 public:
     BinaryTree() = default;
     ~BinaryTree() { clear(); }
+
+    // Конструктор копирования 
+    BinaryTree(const BinaryTree& other) {
+        root = copyHelper(other.root);
+        _size = other._size;
+    }
+
+    // Оператор присваивания
+    BinaryTree& operator=(const BinaryTree& other) {
+        if (this != &other) {
+            clear(); // Очищаем текущее дерево
+            root = copyHelper(other.root);
+            _size = other._size;
+        }
+        return *this;
+    }
+
+    // Конструктор перемещения 
+    BinaryTree(BinaryTree&& other) noexcept : root(other.root), _size(other._size) {
+        other.root = nullptr;
+        other._size = 0;
+    }
+
+    // Оператор перемещения
+    BinaryTree& operator=(BinaryTree&& other) noexcept {
+        if (this != &other) {
+            clear();
+            root = other.root;
+            _size = other._size;
+            other.root = nullptr;
+            other._size = 0;
+        }
+        return *this;
+    }
 
     void insert(const T& val) {
         if (!root) {
@@ -69,7 +119,6 @@ public:
             return;
         }
 
-        // Используем твою Queue
         Queue<TreeNode<T>*> q;
         q.enqueue(root);
 
@@ -127,7 +176,7 @@ public:
 
         if (!targetNode) return false;
 
-        // Переносим данные из последнего узла в удаляемый
+        // Перенос данных из последнего узла в удаляемый
         targetNode->data = lastNode->data;
 
         // Удаляем последний узел физически
