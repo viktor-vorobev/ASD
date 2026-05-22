@@ -278,35 +278,63 @@ istream& operator>>(istream& is, Monom& monom) {
     return is;
 }
 
-// Сравнение для упорядочивания
+//// Сравнение для упорядочивания
+//bool Monom::operator<(const Monom& other) const {
+//    // Сначала сравниваем степени x
+//    int degX1 = getDegree('x');
+//    int degX2 = other.getDegree('x');
+//    if (degX1 != degX2) {
+//        return degX1 > degX2; // Большая степень x идет раньше
+//    }
+//
+//    // Затем степени y
+//    int degY1 = getDegree('y');
+//    int degY2 = other.getDegree('y');
+//    if (degY1 != degY2) {
+//        return degY1 > degY2; // Большая степень y идет раньше
+//    }
+//
+//    // Затем степени z
+//    int degZ1 = getDegree('z');
+//    int degZ2 = other.getDegree('z');
+//    if (degZ1 != degZ2) {
+//        return degZ1 > degZ2; // Большая степень z идет раньше
+//    }
+//
+//    // Если все степени равны, сравниваем коэффициенты
+//    return coefficient > other.coefficient;
+//}
+
+// Сравнение для упорядочивания (лексикографическое математическое)
 bool Monom::operator<(const Monom& other) const {
-    // Сначала сравниваем степени x
-    int degX1 = getDegree('x');
-    int degX2 = other.getDegree('x');
-    if (degX1 != degX2) {
-        return degX1 > degX2; // Большая степень x идет раньше
+    auto it1 = variables.begin();
+    auto it2 = other.variables.begin();
+
+    while (it1 != variables.end() && it2 != other.variables.end()) {
+        if (it1->first != it2->first) {
+            // Переменная, идущая раньше в алфавите (x), считается "старше".
+            // Если у this буква 'y', а у other 'x', то this МЕНЬШЕ (возвращаем true).
+            return it1->first > it2->first;
+        }
+        if (it1->second != it2->second) {
+            // При одинаковых переменных меньшая степень означает меньший моном.
+            return it1->second < it2->second;
+        }
+        ++it1;
+        ++it2;
     }
 
-    // Затем степени y
-    int degY1 = getDegree('y');
-    int degY2 = other.getDegree('y');
-    if (degY1 != degY2) {
-        return degY1 > degY2; // Большая степень y идет раньше
-    }
+    // Если общий префикс совпал (например, x^2 и x^2y):
+    // Моном с бОльшим числом переменных считается старше.
+    if (it2 != other.variables.end()) return true;  // у other остались переменные -> мы меньше
+    if (it1 != variables.end()) return false; // у нас остались переменные -> мы больше
 
-    // Затем степени z
-    int degZ1 = getDegree('z');
-    int degZ2 = other.getDegree('z');
-    if (degZ1 != degZ2) {
-        return degZ1 > degZ2; // Большая степень z идет раньше
-    }
-
-    // Если все степени равны, сравниваем коэффициенты
-    return coefficient > other.coefficient;
+    // Если переменные идентичны, сравниваем коэффициенты
+    return coefficient < other.coefficient;
 }
 
 bool Monom::operator>(const Monom& other) const {
-    return other < *this;
+    return other < *this; // Использует написанный выше оператор <
 }
 
 // Внешние операторы для умножения/деления на число
@@ -396,17 +424,13 @@ void Monom::parseString(const string& str) {
 }
 
 void Monom::normalize() {
-    // Удаляем переменные с нулевой степенью
-    removeZeroCoefficientVars();
-
-    // Сортируем переменные
-    vector<pair<char, int>> sortedVars(variables.begin(), variables.end());
-    sort(sortedVars.begin(), sortedVars.end());
-
-    variables.clear();
-    for (const auto& var : sortedVars) {
-        if (var.second > 0) {
-            variables[var.first] = var.second;
+    auto it = variables.begin();
+    while (it != variables.end()) {
+        if (it->second <= 0) {
+            it = variables.erase(it); // Удаляем переменные с нулевой степенью
+        }
+        else {
+            ++it;
         }
     }
 }

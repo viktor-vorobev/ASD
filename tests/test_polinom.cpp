@@ -566,14 +566,8 @@ TEST(PolynomTest, UnaryMinus) {
     Polynom result = -p;
 
     result.simplify();
-    std::string str = result.toString();
 
-    // Должно быть "-x^2 + 2xy - y^2" или эквивалентное представление
-    EXPECT_TRUE(str.find("-x^2") != std::string::npos ||
-        str.find("x^2") == std::string::npos);
-    EXPECT_TRUE(str.find("2xy") != std::string::npos ||
-        str.find("xy") != std::string::npos);
-    EXPECT_TRUE(str.find("-y^2") != std::string::npos);
+    EXPECT_EQ(result.toString(), "-x^2 + 2xy - y^2");
 }
 
 TEST(PolynomTest, PlusEqualsOperator) {

@@ -56,8 +56,10 @@ void Polynom::sortMonoms() {
         vec.push_back(*it);
     }
 
-    // Сортируем в порядке убывания
-    sort(vec.begin(), vec.end());
+    // Сортируем в порядке УБЫВАНИЯ (используем лямбду с оператором >)
+    sort(vec.begin(), vec.end(), [](const Monom& a, const Monom& b) {
+        return a > b;
+        });
 
     // Очищаем список и добавляем отсортированные мономы
     monoms.clear();
@@ -428,19 +430,16 @@ Polynom Polynom::integral(char var) const {
 // Вспомогательные методы
 void Polynom::parseString(const string& str) {
     monoms.clear();
-
-    if (str.empty()) {
-        return;
-    }
+    if (str.empty()) return;
 
     string s = str;
 
-    // Заменяем вычитание на добавление отрицательного
+    // Заменяем вычитание на добавление отрицательного монома
     for (size_t i = 1; i < s.length(); i++) {
-        if (s[i] == '-') {
-            s[i] = '+';
-            s.insert(i, "-");
-            i++;
+        // Если встретили минус, и перед ним нет плюса или скобки
+        if (s[i] == '-' && s[i - 1] != '+' && s[i - 1] != '(') {
+            s.insert(i, "+");
+            i++; // Пропускаем только что вставленный и смещенный минус
         }
     }
 
