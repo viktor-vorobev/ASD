@@ -40,6 +40,7 @@ add_subdirectory(lib_sorted_table_avl)
 add_subdirectory(lib_sorted_table_rb)
 add_subdirectory(lib_hash_table_chain)
 add_subdirectory(lib_hash_table_double)
+add_subdirectory(lib_tk2)
 
 option(BTEST "build test?" ON)        # указываем подключаем ли google-тесты (ON или YES) или нет (OFF или NO)
 
