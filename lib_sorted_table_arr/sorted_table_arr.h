@@ -29,13 +29,14 @@ public:
     void insert(const TKey& key, const TVal& value) override {
         auto it = findIt(key);
         if (it != _rows.end() && it->first == key) throw TableException("Key already exists");
-        _rows.insert(it, { key, value });
+        // Используем emplace для прямого конструирования элемента
+        _rows.emplace(it, key, value);
     }
 
     void remove(const TKey& key) override {
         auto it = findIt(key);
         if (it == _rows.end() || it->first != key) throw TableException("Key not found");
-        _rows.erase(it);
+        _rows.erase(it); // В векторе это O(N), так как нужно сдвинуть элементы
     }
 
     TVal find(const TKey& key) const override {
@@ -55,12 +56,14 @@ public:
 
     std::vector<TKey> getKeys() const override {
         std::vector<TKey> keys;
+        keys.reserve(_rows.size());
         for (const auto& row : _rows) keys.push_back(row.first);
         return keys;
     }
 
     std::vector<TVal> getValues() const override {
         std::vector<TVal> values;
+        values.reserve(_rows.size());
         for (const auto& row : _rows) values.push_back(row.second);
         return values;
     }
@@ -68,7 +71,8 @@ public:
     TVal& operator[](const TKey& key) override {
         auto it = findIt(key);
         if (it != _rows.end() && it->first == key) return it->second;
-        it = _rows.insert(it, { key, TVal() });
+        // emplace возвращает итератор на вставленный элемент (начиная с C++11)
+        it = _rows.emplace(it, key, TVal());
         return it->second;
     }
 
@@ -91,16 +95,32 @@ public:
         _rows.clear();
         std::stringstream ss(data);
         std::string line;
+
         if (!std::getline(ss, line) || line.empty()) return;
-        int count = std::stoi(line);
+
+        int count;
+        try {
+            count = std::stoi(line);
+        }
+        catch (...) {
+            return;
+        }
+
         for (int i = 0; i < count; ++i) {
             TKey key;
-            if (!std::getline(ss, line)) break;
-            std::stringstream(line) >> key;
             TVal val;
-            ss >> val;
-            _rows.push_back({ key, val });
+
+            if (!std::getline(ss, line)) break;
+            std::stringstream keyStream(line);
+            keyStream >> key;
+
+            if (!std::getline(ss, line)) break;
+            std::stringstream valStream(line);
+            valStream >> val;
+
+            _rows.emplace_back(key, val); // Вставляем в конец
         }
+        // Сортируем все разом за O(N log N)
         std::sort(_rows.begin(), _rows.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
     }
 };

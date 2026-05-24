@@ -65,8 +65,7 @@ public:
         return res->second;
     }
 
-    // Метод для демонстрации всех 4 обходов дерева на экран
-    void printTraversals() const {
+    void printTable() const {
         auto printer = [](const std::pair<TKey, TVal>& item) {
             std::cout << "[" << item.first << " : " << item.second << "] ";
             };
@@ -91,15 +90,30 @@ public:
         clear();
         std::stringstream ss(data);
         std::string line;
+
         if (!std::getline(ss, line) || line.empty()) return;
-        int count = std::stoi(line);
+
+        int count;
+        try {
+            count = std::stoi(line);
+        }
+        catch (...) {
+            return;
+        }
+
         for (int i = 0; i < count; ++i) {
             TKey key;
-            if (!std::getline(ss, line)) break;
-            std::stringstream(line) >> key;
             TVal val;
-            ss >> val;
-            insert(key, val);
+
+            if (!std::getline(ss, line)) break;
+            std::stringstream keyStream(line);
+            keyStream >> key;
+
+            if (!std::getline(ss, line)) break;
+            std::stringstream valStream(line);
+            valStream >> val;
+
+            _tree.insert({ key, val });
         }
     }
 };

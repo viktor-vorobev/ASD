@@ -16,7 +16,8 @@ public:
 
     void insert(const TKey& key, const TVal& value) override {
         if (contains(key)) throw TableException("Key already exists");
-        _rows.push_back({ key, value });
+        // Используем emplace_back для избежания лишних копирований pair
+        _rows.emplace_back(key, value);
     }
 
     void remove(const TKey& key) override {
@@ -50,12 +51,14 @@ public:
 
     std::vector<TKey> getKeys() const override {
         std::vector<TKey> keys;
+        keys.reserve(_rows.size()); // Оптимизация выделения памяти
         for (const auto& row : _rows) keys.push_back(row.first);
         return keys;
     }
 
     std::vector<TVal> getValues() const override {
         std::vector<TVal> values;
+        values.reserve(_rows.size()); // Оптимизация выделения памяти
         for (const auto& row : _rows) values.push_back(row.second);
         return values;
     }
@@ -64,7 +67,7 @@ public:
         for (auto& row : _rows) {
             if (row.first == key) return row.second;
         }
-        _rows.push_back({ key, TVal() });
+        _rows.emplace_back(key, TVal());
         return _rows.back().second;
     }
 
@@ -88,15 +91,32 @@ public:
         _rows.clear();
         std::stringstream ss(data);
         std::string line;
+
         if (!std::getline(ss, line) || line.empty()) return;
-        int count = std::stoi(line);
+
+        int count;
+        try {
+            count = std::stoi(line);
+        }
+        catch (...) {
+            return; // Защита от поврежденных данных
+        }
+
         for (int i = 0; i < count; ++i) {
             TKey key;
-            if (!std::getline(ss, line)) break;
-            std::stringstream(line) >> key;
             TVal val;
-            ss >> val;
-            _rows.push_back({ key, val });
+
+            // 1. Читаем строку ключа целиком
+            if (!std::getline(ss, line)) break;
+            std::stringstream keyStream(line);
+            keyStream >> key; // Чтение для шаблонного типа
+
+            // 2. Читаем строку значения целиком в буфер
+            if (!std::getline(ss, line)) break;
+            std::stringstream valStream(line);
+            valStream >> val; // Парсинг изолированной строки
+
+            _rows.emplace_back(key, val);
         }
     }
 };

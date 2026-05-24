@@ -22,10 +22,11 @@ public:
     }
 
     void remove(const TKey& key) override {
-        size_t idx = 0;
-        for (auto it = _list.begin(); it != _list.end(); ++it, ++idx) {
+        // Оптимизация: избегаем _list.erase(idx), который делает повторный проход по списку
+        for (auto it = _list.begin(); it != _list.end(); ++it) {
             if (it->first == key) {
-                _list.erase(idx);
+                *it = _list.back(); // Копируем данные из хвоста в текущий узел
+                _list.pop_back();   // Удаляем хвост за O(1)
                 return;
             }
         }
@@ -48,16 +49,21 @@ public:
 
     void clear() override { _list.clear(); }
     bool isEmpty() const override { return _list.empty(); }
-    int size() const override { return _list.size(); }
+
+    int size() const override {
+        return static_cast<int>(_list.size()); // Приведение типа для избежания warning
+    }
 
     std::vector<TKey> getKeys() const override {
         std::vector<TKey> keys;
+        keys.reserve(_list.size());
         for (auto it = _list.begin(); it != _list.end(); ++it) keys.push_back(it->first);
         return keys;
     }
 
     std::vector<TVal> getValues() const override {
         std::vector<TVal> values;
+        values.reserve(_list.size());
         for (auto it = _list.begin(); it != _list.end(); ++it) values.push_back(it->second);
         return values;
     }
@@ -67,7 +73,7 @@ public:
             if (it->first == key) return it->second;
         }
         _list.push_back({ key, TVal() });
-        return _list.back().second;
+        return _list.back().second; // list.back() отрабатывает за O(1) благодаря tail-указателю
     }
 
     const TVal& operator[](const TKey& key) const override {
@@ -87,15 +93,32 @@ public:
         clear();
         std::stringstream ss(data);
         std::string line;
+
         if (!std::getline(ss, line) || line.empty()) return;
-        int count = std::stoi(line);
+
+        int count;
+        try {
+            count = std::stoi(line);
+        }
+        catch (...) {
+            return;
+        }
+
         for (int i = 0; i < count; ++i) {
             TKey key;
-            if (!std::getline(ss, line)) break;
-            std::stringstream(line) >> key;
             TVal val;
-            ss >> val;
-            insert(key, val);
+
+            // Читаем строку ключа целиком
+            if (!std::getline(ss, line)) break;
+            std::stringstream keyStream(line);
+            keyStream >> key;
+
+            // Читаем строку значения целиком
+            if (!std::getline(ss, line)) break;
+            std::stringstream valStream(line);
+            valStream >> val;
+
+            _list.push_back({ key, val });
         }
     }
 };

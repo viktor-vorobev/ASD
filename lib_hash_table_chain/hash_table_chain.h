@@ -5,6 +5,8 @@
 #include "list.h"
 #include <vector>
 #include <functional>
+#include <sstream>
+#include <string>
 
 template <class TKey, class TVal>
 class HashTableChaining : public ITable<TKey, TVal> {
@@ -17,13 +19,12 @@ private:
     }
 
     void rehash() {
-        std::vector<List<std::pair<TKey, TVal>>> old = _table;
-        _table.clear();
+        std::vector<List<std::pair<TKey, TVal>>> old = std::move(_table);
         _table.resize(old.size() * 2 + 1);
-        _size = 0;
+        _size = 0; // Будет инкрементироваться внутри insert
         for (auto& list : old) {
             for (auto it = list.begin(); it != list.end(); ++it) {
-                insert(it->first, it->second);
+                insert(std::move(it->first), std::move(it->second));
             }
         }
     }
@@ -44,10 +45,10 @@ public:
 
     void remove(const TKey& key) override {
         size_t idx = hashFunc(key);
-        size_t pos = 0;
-        for (auto it = _table[idx].begin(); it != _table[idx].end(); ++it, ++pos) {
+        for (auto it = _table[idx].begin(); it != _table[idx].end(); ++it) {
             if (it->first == key) {
-                _table[idx].erase(pos);
+                *it = std::move(_table[idx].back());
+                _table[idx].pop_back();
                 _size--;
                 return;
             }
@@ -80,6 +81,7 @@ public:
 
     std::vector<TKey> getKeys() const override {
         std::vector<TKey> keys;
+        keys.reserve(_size);
         for (const auto& list : _table) {
             for (auto it = list.begin(); it != list.end(); ++it) keys.push_back(it->first);
         }
@@ -88,6 +90,7 @@ public:
 
     std::vector<TVal> getValues() const override {
         std::vector<TVal> vals;
+        vals.reserve(_size);
         for (const auto& list : _table) {
             for (auto it = list.begin(); it != list.end(); ++it) vals.push_back(it->second);
         }
@@ -99,16 +102,51 @@ public:
         for (auto it = _table[idx].begin(); it != _table[idx].end(); ++it) {
             if (it->first == key) return it->second;
         }
+
         insert(key, TVal());
-        for (auto it = _table[idx].begin(); it != _table[idx].end(); ++it) {
-            if (it->first == key) return it->second;
-        }
-        throw TableException("Insert failed");
+
+        idx = hashFunc(key);
+
+        // После вставки элемент находится в конце списка этой корзины
+        return _table[idx].back().second;
     }
 
     const TVal& operator[](const TKey& key) const override { return find(key); }
 
-    std::string serialize() const override { return ""; } // Заглушка для сокращения кода
-    void deserialize(const std::string& data) override {}
+    std::string serialize() const override {
+        std::stringstream ss;
+        ss << size() << "\n";
+        for (const auto& list : _table) {
+            for (auto it = list.begin(); it != list.end(); ++it) {
+                ss << it->first << "\n" << it->second << "\n";
+            }
+        }
+        return ss.str();
+    }
+
+    void deserialize(const std::string& data) override {
+        clear();
+        std::stringstream ss(data);
+        std::string line;
+
+        if (!std::getline(ss, line) || line.empty()) return;
+
+        int count;
+        try { count = std::stoi(line); }
+        catch (...) { return; }
+
+        for (int i = 0; i < count; ++i) {
+            TKey key; TVal val;
+            if (!std::getline(ss, line)) break;
+            std::stringstream keyStream(line);
+            keyStream >> key;
+
+            if (!std::getline(ss, line)) break;
+            std::stringstream valStream(line);
+            valStream >> val;
+
+            insert(key, val);
+        }
+    }
 };
-#endif
+#endif // HASH_TABLE_CHAIN_H
