@@ -1,8 +1,8 @@
 #ifndef UNSORTED_TABLE_TREE_H
 #define UNSORTED_TABLE_TREE_H
 
-#include "itable.h"
-#include "binary_tree.h"
+#include "itable.cpp"
+#include "binary_tree.cpp"
 #include <vector>
 #include <utility>
 #include <sstream>

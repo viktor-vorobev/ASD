@@ -2,7 +2,7 @@
 #define POLYNOM_H
 
 #include "monom.h"
-#include "list.h"
+#include "list.cpp"
 #include <string>
 #include <vector>
 #include <sstream>
